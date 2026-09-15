@@ -177,4 +177,4 @@ Strong PR targets: packet-loss stability, orphan room cleanup, metrics/observabi
 
 [MIT](./LICENSE.md) — Copyright © 2026 Steel Fight Lab Contributors.
 
-Note: data derived from *Dota 2* / Valve is not covered by MIT. See the appendix in `LICENSE.md`.
+Note: data derived from *Dota 2* / Valve is not covered by MIT. See the appendix in `LICENSE.md` and [CREDITS.md](./CREDITS.md).
