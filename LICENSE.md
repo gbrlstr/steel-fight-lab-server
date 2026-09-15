@@ -22,13 +22,13 @@ SOFTWARE.
 
 ---
 
-## Aviso sobre conteúdo de terceiros
+## Third-party content notice
 
-Esta licença cobre o código e a documentação do servidor.
+This license covers the server code and documentation.
 
-Dados de roster, nomes de heróis e qualquer material derivado de *Dota 2* /
-Valve Corporation **não** estão licenciados aqui e permanecem propriedade de
-seus titulares. Não redistribua assets Valve junto com este repositório.
+Roster data, hero names, and any material derived from *Dota 2* /
+Valve Corporation are **not** licensed here and remain the property of
+their owners. Do not redistribute Valve assets with this repository.
 
-*Dota 2*, *Valve* e marcas relacionadas são propriedade de Valve Corporation.
-Este projeto é um protótipo independente, sem afiliação oficial.
+*Dota 2*, *Valve*, and related marks are property of Valve Corporation.
+This project is an independent prototype with no official affiliation.

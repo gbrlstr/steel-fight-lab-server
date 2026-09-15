@@ -1,9 +1,27 @@
 {
-  "name": "sleet-fighter-server",
-  "version": "0.1.0",
-  "description": "Backend NestJS autoritativo para salas multiplayer do Steel Fight Lab",
-  "author": "",
-  "private": true,
+  "name": "steel-fight-lab-server",
+  "version": "0.0.1",
+  "description": "Authoritative NestJS backend for Steel Fight Lab multiplayer rooms",
+  "author": "GBRL DEV (gabriel.developed@gmail.com)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gbrl-dev/steel-fight-lab-server.git"
+  },
+  "homepage": "https://github.com/gbrl-dev/steel-fight-lab-server",
+  "bugs": {
+    "url": "https://github.com/gbrl-dev/steel-fight-lab-server/issues"
+  },
+  "keywords": [
+    "game",
+    "multiplayer",
+    "nestjs",
+    "websocket",
+    "steel-fight-lab",
+    "steel-fight-lab-server",
+    "steel-fight-lab-server-server",
+    "steel-fight-lab-server-server-server"
+  ],
+  "private": false,
   "license": "MIT",
   "scripts": {
     "build": "nest build",
