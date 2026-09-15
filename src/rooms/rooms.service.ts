@@ -10,9 +10,17 @@ import {
   type Input,
   type State,
 } from '../game/combat'
-import type { MatchRuntime, Person, Room, RoomSummary, RoomView } from './rooms.types'
+import {
+  RECONNECT_MS,
+  type Person,
+  type Room,
+  type RoomSummary,
+  type RoomView,
+} from './rooms.types'
 
 const INPUT_KEYS = ['left', 'right', 'up', 'down', 'attack', 'special'] as const
+
+type SocketCtx = { room: Room | null; person: Person | null }
 
 @Injectable()
 export class RoomsService {
@@ -54,11 +62,14 @@ export class RoomsService {
       bracket: room.bracket,
       champion: room.champion,
       active: !!room.match,
+      paused: !!room.match?.paused,
+      pauseUntil: room.match?.pauseUntil ?? 0,
+      missing: room.match?.missing ?? [],
     }
   }
 
-  send(ws: WebSocket, data: unknown) {
-    if (ws.readyState === 1 && ws.bufferedAmount < 1024 * 1024) {
+  send(ws: WebSocket | null, data: unknown) {
+    if (ws && ws.readyState === 1 && ws.bufferedAmount < 1024 * 1024) {
       ws.send(JSON.stringify(data))
     }
   }
@@ -69,6 +80,20 @@ export class RoomsService {
 
   update(room: Room) {
     this.broadcast(room, this.view(room))
+  }
+
+  private purgeRoom(room: Room) {
+    if ([...room.people.values()].some((entry) => entry.online)) return
+    this.rooms.delete(room.code)
+    this.logger.log(`Sala ${room.code} removida`)
+  }
+
+  private removePerson(room: Room, person: Person) {
+    room.people.delete(person.id)
+    room.queue = room.queue.filter((id) => id !== person.id)
+    if (person.id === room.host) {
+      room.host = [...room.people.values()].find((entry) => entry.online)?.id ?? null
+    }
   }
 
   private schedule(room: Room) {
@@ -125,6 +150,9 @@ export class RoomsService {
       sequence: [-1, -1],
       clock: performance.now(),
       terminal: 0,
+      paused: false,
+      pauseUntil: 0,
+      missing: [],
     }
     this.broadcast(room, {
       type: 'start',
@@ -134,7 +162,55 @@ export class RoomsService {
     this.update(room)
   }
 
-  handleMessage(ws: WebSocket, raw: RawData, ctx: { room: Room | null; person: Person | null }) {
+  private pauseMatch(room: Room, missingId: string) {
+    const match = room.match
+    if (!match) return
+    if (!match.missing.includes(missingId)) match.missing.push(missingId)
+    match.paused = true
+    match.pauseUntil = Date.now() + RECONNECT_MS
+    match.clock = performance.now()
+    this.broadcast(room, {
+      type: 'paused',
+      until: match.pauseUntil,
+      missing: match.missing,
+      seconds: Math.ceil(RECONNECT_MS / 1000),
+    })
+    this.update(room)
+    this.logger.log(`Partida pausada na sala ${room.code} · aguardando ${missingId.slice(0, 8)}`)
+  }
+
+  private resumeMatch(room: Room) {
+    const match = room.match
+    if (!match?.paused) return
+    match.paused = false
+    match.pauseUntil = 0
+    match.missing = []
+    match.clock = performance.now()
+    this.broadcast(room, {
+      type: 'resumed',
+      pair: room.pair,
+      state: match.state,
+    })
+    this.update(room)
+    this.logger.log(`Partida retomada na sala ${room.code}`)
+  }
+
+  private tryResume(room: Room) {
+    const match = room.match
+    if (!match?.paused) return
+    match.missing = match.missing.filter((id) => !room.people.get(id)?.online)
+    if (!match.missing.length) this.resumeMatch(room)
+    else this.update(room)
+  }
+
+  private attachPerson(room: Room, person: Person, ws: WebSocket) {
+    person.ws = ws
+    person.online = true
+    person.disconnectedAt = null
+    person.ready = room.pair.includes(person.id) ? person.ready : false
+  }
+
+  handleMessage(ws: WebSocket, raw: RawData, ctx: SocketCtx) {
     const message = JSON.parse(raw.toString()) as Record<string, unknown>
     if (message.type === 'ping') {
       this.send(ws, { type: 'pong', at: message.at })
@@ -148,6 +224,54 @@ export class RoomsService {
 
     if (message.type === 'create' || message.type === 'join') {
       if (ctx.room) throw new Error('Já conectado a uma sala')
+
+      const resumeId = String(message.resumeId ?? '')
+      const resumeToken = String(message.resumeToken ?? '')
+
+      if (message.type === 'join' && resumeId && resumeToken) {
+        const room = this.rooms.get(String(message.code ?? '').toUpperCase())
+        const existing = room?.people.get(resumeId)
+        if (room && existing && existing.token === resumeToken) {
+          if (existing.online && existing.ws && existing.ws !== ws) {
+            try {
+              existing.ws.close(4000, 'replaced')
+            } catch {
+              /* ignore */
+            }
+          }
+          this.attachPerson(room, existing, ws)
+          if (message.nick) {
+            existing.nick = String(message.nick).trim().slice(0, 24) || existing.nick
+          }
+          this.send(ws, {
+            type: 'welcome',
+            id: existing.id,
+            code: room.code,
+            token: existing.token,
+            resumed: true,
+          })
+          this.send(ws, this.view(room))
+          if (room.match) {
+            this.send(ws, {
+              type: 'start',
+              pair: room.pair,
+              state: room.match.state,
+            })
+            if (room.match.paused) {
+              this.send(ws, {
+                type: 'paused',
+                until: room.match.pauseUntil,
+                missing: room.match.missing,
+                seconds: Math.max(0, Math.ceil((room.match.pauseUntil - Date.now()) / 1000)),
+              })
+            }
+          }
+          this.tryResume(room)
+          this.update(room)
+          return { room, person: existing }
+        }
+      }
+
       let room: Room | undefined
       if (message.type === 'create') {
         if (this.rooms.size >= 100) throw new Error('Servidor cheio')
@@ -169,25 +293,27 @@ export class RoomsService {
       }
       if (!room) throw new Error('Sala não encontrada')
       if (room.people.size >= 64) throw new Error('Sala cheia')
+
       const person: Person = {
         id: randomUUID(),
+        token: randomBytes(16).toString('hex'),
         nick: String(message.nick ?? 'Viewer').trim().slice(0, 24) || 'Viewer',
         hero: 'tusk',
         ready: false,
         online: true,
         ws,
+        disconnectedAt: null,
       }
       room.people.set(person.id, person)
       if (!room.host) room.host = person.id
-      this.send(ws, { type: 'welcome', id: person.id, code: room.code })
+      this.send(ws, {
+        type: 'welcome',
+        id: person.id,
+        code: room.code,
+        token: person.token,
+        resumed: false,
+      })
       this.send(ws, this.view(room))
-      if (room.match) {
-        this.send(ws, {
-          type: 'start',
-          pair: room.pair,
-          state: room.match.state,
-        })
-      }
       this.update(room)
       return { room, person }
     }
@@ -195,8 +321,16 @@ export class RoomsService {
     const { room, person } = ctx
     if (!room || !person) throw new Error('Entre em uma sala')
 
+    if (message.type === 'exit') {
+      this.exitPerson(room, person, 'saída')
+      return { room: null, person: null }
+    }
+
     if (message.type === 'hero') {
-      if (room.pair.includes(person.id)) {
+      if (room.pair.includes(person.id) && room.match) {
+        throw new Error('Seleção bloqueada durante a luta')
+      }
+      if (room.pair.includes(person.id) && !room.match) {
         throw new Error('Seleção bloqueada durante convocação')
       }
       if (Object.hasOwn(roster, String(message.hero))) {
@@ -261,6 +395,7 @@ export class RoomsService {
     }
 
     if (message.type === 'input') {
+      if (room.match?.paused) return ctx
       this.applyInput(room, person, message)
       return ctx
     }
@@ -269,10 +404,33 @@ export class RoomsService {
     return ctx
   }
 
+  private exitPerson(room: Room, person: Person, reason: string) {
+    const inMatch = !!room.match && room.pair.includes(person.id)
+    if (inMatch) {
+      this.finish(
+        room,
+        room.pair.find((id) => id !== person.id),
+        reason === 'saída' ? 'abandono' : reason,
+      )
+    } else if (room.pair.includes(person.id) && !room.match) {
+      for (const id of room.pair) {
+        const entry = room.people.get(id)
+        if (entry) entry.ready = false
+      }
+      room.pair = []
+      room.deadline = 0
+    }
+    person.online = false
+    person.ws = null
+    this.removePerson(room, person)
+    this.update(room)
+    this.purgeRoom(room)
+  }
+
   private applyInput(room: Room, person: Person, message: Record<string, unknown>) {
     const match = room.match
     const slot = room.pair.indexOf(person.id)
-    if (!match || slot < 0) return
+    if (!match || slot < 0 || match.paused) return
 
     const seq = message.seq
     const frame = message.frame
@@ -307,25 +465,40 @@ export class RoomsService {
     }
   }
 
-  handleDisconnect(room: Room | null, person: Person | null) {
+  handleDisconnect(room: Room | null, person: Person | null, ws?: WebSocket) {
     if (!room || !person) return
+    if (!room.people.has(person.id)) return
+    // Stale socket after resume — the new connection already owns this seat.
+    if (person.ws && ws && person.ws !== ws) return
+    if (person.online && person.ws && !ws) return
+
     person.online = false
+    person.ws = null
+    person.disconnectedAt = Date.now()
     room.queue = room.queue.filter((id) => id !== person.id)
-    if (room.pair.includes(person.id)) {
-      this.finish(
-        room,
-        room.pair.find((id) => id !== person.id),
-        'desconexão',
-      )
+
+    if (room.match && room.pair.includes(person.id)) {
+      this.pauseMatch(room, person.id)
+      this.update(room)
+      return
     }
+
+    if (room.pair.includes(person.id) && !room.match) {
+      for (const id of room.pair) {
+        const entry = room.people.get(id)
+        if (entry) entry.ready = false
+      }
+      room.pair = []
+      room.deadline = 0
+    }
+
     if (person.id === room.host) {
       room.host = [...room.people.values()].find((entry) => entry.online)?.id ?? null
     }
+
+    this.removePerson(room, person)
     this.update(room)
-    if (![...room.people.values()].some((entry) => entry.online)) {
-      this.rooms.delete(room.code)
-      this.logger.log(`Sala ${room.code} removida`)
-    }
+    this.purgeRoom(room)
   }
 
   tick() {
@@ -345,6 +518,30 @@ export class RoomsService {
       }
 
       const match = room.match
+
+      if (match.paused) {
+        if (Date.now() >= match.pauseUntil) {
+          const online = room.pair.filter((id) => room.people.get(id)?.online)
+          const offline = room.pair.filter((id) => !room.people.get(id)?.online)
+          if (offline.length) {
+            const winner =
+              online.length === 1
+                ? online[0]
+                : room.pair.find((id) => !match.missing.includes(id)) ?? online[0]
+            this.finish(room, winner, 'desconexão: tempo de reconexão esgotado')
+            for (const id of offline) {
+              const missing = room.people.get(id)
+              if (missing) this.removePerson(room, missing)
+            }
+            this.update(room)
+            this.purgeRoom(room)
+          } else {
+            this.resumeMatch(room)
+          }
+        }
+        continue
+      }
+
       const now = performance.now()
       let budget = 8
       while (now - match.clock >= 1000 / 60 && budget--) {
@@ -369,7 +566,7 @@ export class RoomsService {
         } else match.terminal = 0
       }
 
-      if (room.match) {
+      if (room.match && !room.match.paused) {
         this.broadcast(room, {
           type: 'snapshot',
           state: match.state,

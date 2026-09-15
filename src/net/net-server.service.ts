@@ -71,7 +71,7 @@ export class NetServerService implements OnModuleInit, OnModuleDestroy {
     })
 
     ws.on('close', () => {
-      this.rooms.handleDisconnect(ctx.room, ctx.person)
+      this.rooms.handleDisconnect(ctx.room, ctx.person, ws)
     })
   }
 }

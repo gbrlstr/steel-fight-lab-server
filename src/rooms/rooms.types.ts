@@ -3,11 +3,13 @@ import type { Input, State } from '../game/combat'
 
 export type Person = {
   id: string
+  token: string
   nick: string
   hero: string
   ready: boolean
   online: boolean
-  ws: WebSocket
+  ws: WebSocket | null
+  disconnectedAt: number | null
 }
 
 export type BracketMatch = {
@@ -24,6 +26,9 @@ export type MatchRuntime = {
   sequence: number[]
   clock: number
   terminal: number
+  paused: boolean
+  pauseUntil: number
+  missing: string[]
 }
 
 export type Room = {
@@ -49,6 +54,9 @@ export type RoomView = {
   bracket: BracketMatch[]
   champion: string | null
   active: boolean
+  paused: boolean
+  pauseUntil: number
+  missing: string[]
 }
 
 export type RoomSummary = {
@@ -58,3 +66,5 @@ export type RoomSummary = {
   queue: number
   active: boolean
 }
+
+export const RECONNECT_MS = 30_000
