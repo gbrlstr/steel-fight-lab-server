@@ -158,6 +158,8 @@ export class RoomsService {
       type: 'start',
       pair: room.pair,
       state: room.match.state,
+      acks: [...room.match.sequence],
+      resumed: false,
     })
     this.update(room)
   }
@@ -190,6 +192,7 @@ export class RoomsService {
       type: 'resumed',
       pair: room.pair,
       state: match.state,
+      acks: [...match.sequence],
     })
     this.update(room)
     this.logger.log(`Partida retomada na sala ${room.code}`)
@@ -252,10 +255,21 @@ export class RoomsService {
           })
           this.send(ws, this.view(room))
           if (room.match) {
+            const slot = room.pair.indexOf(existing.id)
+            if (slot >= 0) {
+              // Allow the reconnected client to start a fresh input sequence.
+              room.match.sequence[slot] = -1
+              for (const [frame, values] of room.match.inputs) {
+                values[slot] = null
+                room.match.inputs.set(frame, values)
+              }
+            }
             this.send(ws, {
               type: 'start',
               pair: room.pair,
               state: room.match.state,
+              acks: [...room.match.sequence],
+              resumed: true,
             })
             if (room.match.paused) {
               this.send(ws, {
