@@ -1,10 +1,10 @@
 {
   "name": "sleet-fighter-server",
   "version": "0.1.0",
-  "description": "Backend NestJS autoritativo para salas multiplayer do Sleet Fighter",
+  "description": "Backend NestJS autoritativo para salas multiplayer do Steel Fight Lab",
   "author": "",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
