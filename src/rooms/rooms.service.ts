@@ -85,7 +85,7 @@ export class RoomsService {
   private purgeRoom(room: Room) {
     if ([...room.people.values()].some((entry) => entry.online)) return
     this.rooms.delete(room.code)
-    this.logger.log(`Sala ${room.code} removida`)
+    this.logger.log(`Room ${room.code} removed`)
   }
 
   private removePerson(room: Room, person: Person) {
@@ -178,7 +178,7 @@ export class RoomsService {
       seconds: Math.ceil(RECONNECT_MS / 1000),
     })
     this.update(room)
-    this.logger.log(`Partida pausada na sala ${room.code} · aguardando ${missingId.slice(0, 8)}`)
+    this.logger.log(`Match paused in room ${room.code} · waiting ${missingId.slice(0, 8)}`)
   }
 
   private resumeMatch(room: Room) {
@@ -195,7 +195,7 @@ export class RoomsService {
       acks: [...match.sequence],
     })
     this.update(room)
-    this.logger.log(`Partida retomada na sala ${room.code}`)
+    this.logger.log(`Match resumed in room ${room.code}`)
   }
 
   private tryResume(room: Room) {
@@ -226,7 +226,7 @@ export class RoomsService {
     }
 
     if (message.type === 'create' || message.type === 'join') {
-      if (ctx.room) throw new Error('Já conectado a uma sala')
+      if (ctx.room) throw new Error('Already connected to a room')
 
       const resumeId = String(message.resumeId ?? '')
       const resumeToken = String(message.resumeToken ?? '')
@@ -288,7 +288,7 @@ export class RoomsService {
 
       let room: Room | undefined
       if (message.type === 'create') {
-        if (this.rooms.size >= 100) throw new Error('Servidor cheio')
+        if (this.rooms.size >= 100) throw new Error('Server full')
         const code = randomBytes(3).toString('hex').toUpperCase()
         room = {
           code,
@@ -305,8 +305,8 @@ export class RoomsService {
       } else {
         room = this.rooms.get(String(message.code ?? '').toUpperCase())
       }
-      if (!room) throw new Error('Sala não encontrada')
-      if (room.people.size >= 64) throw new Error('Sala cheia')
+      if (!room) throw new Error('Room not found')
+      if (room.people.size >= 64) throw new Error('Room full')
 
       const person: Person = {
         id: randomUUID(),
@@ -333,19 +333,19 @@ export class RoomsService {
     }
 
     const { room, person } = ctx
-    if (!room || !person) throw new Error('Entre em uma sala')
+    if (!room || !person) throw new Error('Join a room first')
 
     if (message.type === 'exit') {
-      this.exitPerson(room, person, 'saída')
+      this.exitPerson(room, person, 'leave')
       return { room: null, person: null }
     }
 
     if (message.type === 'hero') {
       if (room.pair.includes(person.id) && room.match) {
-        throw new Error('Seleção bloqueada durante a luta')
+        throw new Error('Hero select locked during fight')
       }
       if (room.pair.includes(person.id) && !room.match) {
-        throw new Error('Seleção bloqueada durante convocação')
+        throw new Error('Hero select locked during call-up')
       }
       if (Object.hasOwn(roster, String(message.hero))) {
         person.hero = String(message.hero)
@@ -353,34 +353,34 @@ export class RoomsService {
     }
 
     if (message.type === 'queue') {
-      if (room.bracket.length) throw new Error('Inscrições encerradas')
+      if (room.bracket.length) throw new Error('Registration closed')
       if (!room.queue.includes(person.id) && !room.pair.includes(person.id)) {
         room.queue.push(person.id)
       }
     }
 
     if (message.type === 'call') {
-      if (person.id !== room.host) throw new Error('Somente organizador')
-      if (room.match || room.pair.length) throw new Error('Já há uma convocação ativa')
+      if (person.id !== room.host) throw new Error('Host only')
+      if (room.match || room.pair.length) throw new Error('A call-up is already active')
       if (room.bracket.length) {
         if (!room.bracket.some((match) => !match.done)) {
-          throw new Error('Torneio encerrado')
+          throw new Error('Tournament finished')
         }
       } else if (room.queue.length < 2) {
-        throw new Error('Precisa de pelo menos 2 lutadores na fila')
+        throw new Error('Need at least 2 fighters in queue')
       }
       this.schedule(room)
       return ctx
     }
 
     if (message.type === 'tournament') {
-      if (person.id !== room.host) throw new Error('Somente organizador')
+      if (person.id !== room.host) throw new Error('Host only')
       if (room.match || room.pair.length || room.bracket.length) {
-        throw new Error('Evento já iniciado')
+        throw new Error('Event already started')
       }
       const n = room.queue.length
       if (n < 2 || n > 32 || (n & (n - 1))) {
-        throw new Error('Inscreva 2, 4, 8, 16 ou 32 participantes')
+        throw new Error('Register 2, 4, 8, 16, or 32 players')
       }
       for (let i = 0; i < n; i += 2) {
         room.bracket.push({
@@ -403,7 +403,7 @@ export class RoomsService {
       this.finish(
         room,
         room.pair.find((id) => id !== person.id),
-        'abandono',
+        'forfeit',
       )
       return ctx
     }
@@ -424,7 +424,7 @@ export class RoomsService {
       this.finish(
         room,
         room.pair.find((id) => id !== person.id),
-        reason === 'saída' ? 'abandono' : reason,
+        reason === 'leave' ? 'forfeit' : reason,
       )
     } else if (room.pair.includes(person.id) && !room.match) {
       for (const id of room.pair) {
@@ -524,8 +524,8 @@ export class RoomsService {
             room,
             ready[0] ?? room.pair[0],
             ready.length
-              ? 'ausência'
-              : 'dupla ausência: avanço administrativo do primeiro inscrito',
+              ? 'no-show'
+              : 'double no-show: advancing first entrant',
           )
         }
         continue
@@ -542,7 +542,7 @@ export class RoomsService {
               online.length === 1
                 ? online[0]
                 : room.pair.find((id) => !match.missing.includes(id)) ?? online[0]
-            this.finish(room, winner, 'desconexão: tempo de reconexão esgotado')
+            this.finish(room, winner, 'disconnect: reconnect time expired')
             for (const id of offline) {
               const missing = room.people.get(id)
               if (missing) this.removePerson(room, missing)
@@ -574,7 +574,7 @@ export class RoomsService {
         if (match.state.winner !== null) {
           if (!match.terminal) match.terminal = match.state.frame
           if (match.state.frame - match.terminal > RULES.rollback) {
-            this.finish(room, room.pair[match.state.winner], 'combate validado')
+            this.finish(room, room.pair[match.state.winner], 'combat validated')
             break
           }
         } else match.terminal = 0
