@@ -42,7 +42,14 @@ function bounds(f: Fighter, b: any) { return volume(f, b) }
 // past the VPK box still connects where the player sees it.
 function fitBox(box: any, x0: number, x1: number, y0: number, y1: number) { const min = box.m_vMinBounds, max = box.m_vMaxBounds; return { ...box, m_vMinBounds: [x0, y0, min[2]], m_vMaxBounds: [x1, y1, max[2]] } }
 const visualStrike: Record<string, Record<string, [number, number, number, number]>> = {
-    tusk: { WALRUS_PUNCH_ACTION_DEFINITION: [-360, 250, -680, -20] },
+    tusk: {
+        // Stocky fists — keep reach near the glove/fish, not the old mid-screen VPK slabs.
+        JAB_ACTION_DEFINITION: [120, 340, -600, -100], JAB_2_ACTION_DEFINITION: [110, 355, -600, -100],
+        CROSS_ACTION_DEFINITION: [130, 380, -580, -110], SWEEP_ACTION_DEFINITION: [140, 400, -480, -90],
+        FINISHER_ACTION_DEFINITION: [110, 390, -780, -60],
+        // Walrus Punch uppercut — tall, short forward reach.
+        WALRUS_PUNCH_ACTION_DEFINITION: [120, 380, -800, -40],
+    },
     bristleback: {
         JAB_ACTION_DEFINITION: [110, 330, -600, -100], JAB_2_ACTION_DEFINITION: [100, 345, -600, -100],
         CROSS_ACTION_DEFINITION: [120, 370, -580, -110], SWEEP_ACTION_DEFINITION: [130, 390, -480, -90],
@@ -90,10 +97,10 @@ const visualHurt: Record<string, Record<string, [number, number, number, number]
         IDLE_ACTION_DEFINITION: [-220, 240, -560, 0], BLOCKSTUN_ACTION_DEFINITION: [-220, 240, -560, 0], HITSTUN_ACTION_DEFINITION: [-220, 240, -560, 0],
         DASH_ACTION_DEFINITION: [-220, 240, -560, 0], BACKDASH_ACTION_DEFINITION: [-220, 240, -560, 0], GUARDBREAK_ACTION_DEFINITION: [-220, 240, -560, 0],
         VICTORY_ACTION_DEFINITION: [-220, 240, -560, 0], DEFEAT_ACTION_DEFINITION: [-160, 160, -560, 0], KNOCKED_DOWN_ACTION_DEFINITION: [-260, 260, -320, 0],
-        JAB_ACTION_DEFINITION: [-200, 420, -520, 0], JAB_2_ACTION_DEFINITION: [-200, 420, -520, 0],
-        CROSS_ACTION_DEFINITION: [-250, 430, -540, 0], SWEEP_ACTION_DEFINITION: [-330, 430, -560, 0],
-        PROJECTILE_ACTION_DEFINITION: [-270, 300, -560, 0],
-        FINISHER_ACTION_DEFINITION: [-310, 340, -620, 0], WALRUS_PUNCH_ACTION_DEFINITION: [-290, 340, -820, 0],
+        JAB_ACTION_DEFINITION: [-180, 320, -540, 0], JAB_2_ACTION_DEFINITION: [-180, 330, -540, 0],
+        CROSS_ACTION_DEFINITION: [-200, 350, -560, 0], SWEEP_ACTION_DEFINITION: [-220, 370, -520, 0],
+        PROJECTILE_ACTION_DEFINITION: [-200, 280, -560, 0],
+        FINISHER_ACTION_DEFINITION: [-210, 360, -700, 0], WALRUS_PUNCH_ACTION_DEFINITION: [-200, 350, -820, 0],
     },
     vengeful: {
         IDLE_ACTION_DEFINITION: [-90, 210, -580, 0], BLOCKSTUN_ACTION_DEFINITION: [-90, 210, -580, 0], HITSTUN_ACTION_DEFINITION: [-90, 210, -580, 0],
