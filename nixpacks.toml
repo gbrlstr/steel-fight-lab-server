@@ -1,6 +1,10 @@
 [variables]
 NIXPACKS_NODE_VERSION = "22"
 
+# Prefer npm install over npm ci so optional/platform deps cannot desync the lock.
+[phases.install]
+cmds = ["npm install"]
+
 [phases.build]
 cmds = ["npm run build"]
 
