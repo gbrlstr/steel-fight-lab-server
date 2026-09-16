@@ -44,10 +44,13 @@ function fitBox(box: any, x0: number, x1: number, y0: number, y1: number) { cons
 const visualStrike: Record<string, Record<string, [number, number, number, number]>> = {
     tusk: { WALRUS_PUNCH_ACTION_DEFINITION: [-360, 250, -680, -20] },
     bristleback: {
-        JAB_2_ACTION_DEFINITION: [-360, 580, -540, -180], CROSS_ACTION_DEFINITION: [-540, 210, -600, -140], SWEEP_ACTION_DEFINITION: [110, 760, -340, -70],
-        QUILLSPRAY_START_ACTION_DEFINITION: [-220, 220, -500, -40], QUILLSPRAY_2_ACTION_DEFINITION: [-245, 245, -510, -35],
-        QUILLSPRAY_3_ACTION_DEFINITION: [-265, 265, -520, -30], QUILLSPRAY_4_ACTION_DEFINITION: [-280, 280, -530, -25],
-        QUILLSPRAY_FINISH_ACTION_DEFINITION: [-300, 300, -540, -20],
+        JAB_ACTION_DEFINITION: [110, 330, -600, -100], JAB_2_ACTION_DEFINITION: [100, 345, -600, -100],
+        CROSS_ACTION_DEFINITION: [120, 370, -580, -110], SWEEP_ACTION_DEFINITION: [130, 390, -480, -90],
+        FINISHER_ACTION_DEFINITION: [100, 380, -780, -60],
+        // Quill Spray is a body-centered burst — keep radius near the spines, not mid-screen.
+        QUILLSPRAY_START_ACTION_DEFINITION: [-175, 175, -520, -60], QUILLSPRAY_2_ACTION_DEFINITION: [-190, 190, -530, -55],
+        QUILLSPRAY_3_ACTION_DEFINITION: [-205, 205, -540, -50], QUILLSPRAY_4_ACTION_DEFINITION: [-215, 215, -550, -45],
+        QUILLSPRAY_FINISH_ACTION_DEFINITION: [-230, 230, -560, -40],
     },
     vengeful: {
         JAB_ACTION_DEFINITION: [40, 520, -640, -40], JAB_2_ACTION_DEFINITION: [40, 640, -640, -40],
@@ -75,7 +78,7 @@ const visualStrike: Record<string, Record<string, [number, number, number, numbe
 // Traveling skills were a standing-height slab. These sit on the drawn sprite or model.
 const visualShot: Record<string, Record<string, [number, number, number, number]>> = {
     tusk: { PROJECTILE_ACTION_DEFINITION: [-50, 55, -125, -10] },
-    bristleback: { PROJECTILE_ACTION_DEFINITION: [-45, 50, -230, -125] },
+    bristleback: { PROJECTILE_ACTION_DEFINITION: [-40, 40, -200, -110] },
     vengeful: { PROJECTILE_ACTION_DEFINITION: [-70, 70, -280, -80] },
 }
 export function shotBox(hero: string, id: string, box: any) { const fit = visualShot[hero]?.[id]; return fit ? fitBox(box, fit[0], fit[1], fit[2], fit[3]) : box }
@@ -102,9 +105,15 @@ const visualHurt: Record<string, Record<string, [number, number, number, number]
         SWAP_ACTION_DEFINITION: [-90, 240, -580, 0], SWAP_RECOVERY_ACTION_DEFINITION: [-90, 210, -580, 0],
     },
     bristleback: {
-        IDLE_ACTION_DEFINITION: [-160, 180, -560, 0], BLOCKSTUN_ACTION_DEFINITION: [-160, 180, -560, 0], HITSTUN_ACTION_DEFINITION: [-160, 180, -560, 0],
-        DASH_ACTION_DEFINITION: [-160, 180, -560, 0], BACKDASH_ACTION_DEFINITION: [-160, 180, -560, 0], GUARDBREAK_ACTION_DEFINITION: [-160, 180, -560, 0],
-        VICTORY_ACTION_DEFINITION: [-160, 180, -560, 0], DEFEAT_ACTION_DEFINITION: [-120, 140, -560, 0], KNOCKED_DOWN_ACTION_DEFINITION: [-220, 220, -300, 0],
+        IDLE_ACTION_DEFINITION: [-150, 170, -560, 0], BLOCKSTUN_ACTION_DEFINITION: [-150, 170, -560, 0], HITSTUN_ACTION_DEFINITION: [-150, 170, -560, 0],
+        DASH_ACTION_DEFINITION: [-150, 170, -560, 0], BACKDASH_ACTION_DEFINITION: [-150, 170, -560, 0], GUARDBREAK_ACTION_DEFINITION: [-150, 170, -560, 0],
+        VICTORY_ACTION_DEFINITION: [-150, 170, -560, 0], DEFEAT_ACTION_DEFINITION: [-120, 140, -560, 0], KNOCKED_DOWN_ACTION_DEFINITION: [-210, 210, -300, 0],
+        JAB_ACTION_DEFINITION: [-140, 300, -560, 0], JAB_2_ACTION_DEFINITION: [-140, 310, -560, 0],
+        CROSS_ACTION_DEFINITION: [-150, 330, -560, 0], SWEEP_ACTION_DEFINITION: [-150, 340, -520, 0],
+        FINISHER_ACTION_DEFINITION: [-150, 350, -700, 0], PROJECTILE_ACTION_DEFINITION: [-160, 240, -560, 0],
+        QUILLSPRAY_START_ACTION_DEFINITION: [-180, 200, -580, 0], QUILLSPRAY_2_ACTION_DEFINITION: [-185, 205, -580, 0],
+        QUILLSPRAY_3_ACTION_DEFINITION: [-190, 210, -590, 0], QUILLSPRAY_4_ACTION_DEFINITION: [-195, 215, -590, 0],
+        QUILLSPRAY_FINISH_ACTION_DEFINITION: [-200, 220, -600, 0],
     },
     marci: {
         IDLE_ACTION_DEFINITION: [-130, 150, -560, 0], BLOCKSTUN_ACTION_DEFINITION: [-130, 150, -560, 0], HITSTUN_ACTION_DEFINITION: [-130, 150, -560, 0],
