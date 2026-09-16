@@ -50,8 +50,9 @@ const visualStrike: Record<string, Record<string, [number, number, number, numbe
         QUILLSPRAY_FINISH_ACTION_DEFINITION: [-300, 300, -540, -20],
     },
     vengeful: {
-        JAB_ACTION_DEFINITION: [-170, 100, -670, -80], JAB_2_ACTION_DEFINITION: [-170, 100, -670, -80], CROSS_ACTION_DEFINITION: [-580, 20, -680, -150], SWEEP_ACTION_DEFINITION: [-300, 270, -650, -110],
-        SWAP_ACTION_DEFINITION: [60, 780, -400, -160],
+        JAB_ACTION_DEFINITION: [40, 520, -640, -40], JAB_2_ACTION_DEFINITION: [40, 640, -640, -40],
+        CROSS_ACTION_DEFINITION: [20, 820, -660, -50], SWEEP_ACTION_DEFINITION: [80, 920, -480, -20],
+        FINISHER_ACTION_DEFINITION: [40, 620, -820, -30], SWAP_ACTION_DEFINITION: [80, 1600, -560, -40],
     },
     marci: { SWEEP_ACTION_DEFINITION: [150, 600, -550, -40], KICK_1_ACTION_DEFINITION: [150, 600, -550, -40], KICK_2_ACTION_DEFINITION: [150, 600, -550, -40], KICK_3_ACTION_DEFINITION: [150, 600, -550, -140] },
 }
@@ -59,7 +60,7 @@ const visualStrike: Record<string, Record<string, [number, number, number, numbe
 const visualShot: Record<string, Record<string, [number, number, number, number]>> = {
     tusk: { PROJECTILE_ACTION_DEFINITION: [-50, 55, -125, -10] },
     bristleback: { PROJECTILE_ACTION_DEFINITION: [-45, 50, -230, -125] },
-    vengeful: { PROJECTILE_ACTION_DEFINITION: [-55, 60, -240, -115] },
+    vengeful: { PROJECTILE_ACTION_DEFINITION: [-70, 70, -280, -80] },
 }
 export function shotBox(hero: string, id: string, box: any) { const fit = visualShot[hero]?.[id]; return fit ? fitBox(box, fit[0], fit[1], fit[2], fit[3]) : box }
 function visualBox(hero: string, id: string, box: any) { if (hero === 'dawnbreaker') return fitBox(box, -650, 180, -1120, -90); const fit = visualStrike[hero]?.[id]; return fit ? fitBox(box, fit[0], fit[1], fit[2], fit[3]) : box }
@@ -79,6 +80,10 @@ const visualHurt: Record<string, Record<string, [number, number, number, number]
         IDLE_ACTION_DEFINITION: [-90, 210, -580, 0], BLOCKSTUN_ACTION_DEFINITION: [-90, 210, -580, 0], HITSTUN_ACTION_DEFINITION: [-90, 210, -580, 0],
         DASH_ACTION_DEFINITION: [-90, 210, -580, 0], BACKDASH_ACTION_DEFINITION: [-90, 210, -580, 0], GUARDBREAK_ACTION_DEFINITION: [-90, 210, -580, 0],
         VICTORY_ACTION_DEFINITION: [-90, 210, -580, 0], DEFEAT_ACTION_DEFINITION: [-70, 160, -580, 0], KNOCKED_DOWN_ACTION_DEFINITION: [-180, 220, -300, 0],
+        JAB_ACTION_DEFINITION: [-90, 360, -580, 0], JAB_2_ACTION_DEFINITION: [-90, 420, -580, 0],
+        CROSS_ACTION_DEFINITION: [-110, 480, -600, 0], SWEEP_ACTION_DEFINITION: [-120, 520, -560, 0],
+        PROJECTILE_ACTION_DEFINITION: [-160, 260, -580, 0], FINISHER_ACTION_DEFINITION: [-100, 460, -700, 0],
+        SWAP_ACTION_DEFINITION: [-90, 240, -580, 0], SWAP_RECOVERY_ACTION_DEFINITION: [-90, 210, -580, 0],
     },
     bristleback: {
         IDLE_ACTION_DEFINITION: [-160, 180, -560, 0], BLOCKSTUN_ACTION_DEFINITION: [-160, 180, -560, 0], HITSTUN_ACTION_DEFINITION: [-160, 180, -560, 0],
@@ -117,7 +122,12 @@ function hit(s: State, owner: number, a: any, x: number, face: number, projectil
     t.x += face * (blocking ? (a.m_flPushbackOnBlock ?? 0) : (a.m_flPushbackOnHit ?? 0))
     // Swap is an engine action enum, not a conventional-Dota ability mapping.
     // The position exchange interpretation still needs comparison with original playback.
-    if (a.m_nActionID === 'SWAP_ACTION_DEFINITION' && !blocking) { const position = f.x; f.x = t.x; t.x = position; f.face *= -1; t.face *= -1 }
+    if (a.m_nActionID === 'SWAP_ACTION_DEFINITION' && !blocking) {
+        const from = f.x, to = t.x
+        f.x = to; t.x = from; f.face *= -1; t.face *= -1
+        s.events.push({ id: `${s.round}:${s.frame}:${owner}:swapA`, kind: 'swap', x: from, face, hero: f.hero, action: a.m_nActionID })
+        s.events.push({ id: `${s.round}:${s.frame}:${owner}:swapB`, kind: 'swap', x: to, face: -face, hero: f.hero, action: a.m_nActionID })
+    }
     s.events.push({ id: `${s.round}:${s.frame}:${owner}:${projectile ? 'p' : 'h'}`, kind: blocking ? 'block' : 'hit', x: t.x, face, hero: f.hero, action: a.m_nActionID }); return true
 }
 function place(s: State) {
