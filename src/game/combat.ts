@@ -235,8 +235,8 @@ export function step(previous: State, inputs: Input[], mode: 'play' | 'move' = '
     place(s)
     if (s.remaining <= 0 || s.fighters.some(f => f.hp <= 0)) {
         const [a, b] = s.fighters; const win = a.hp === b.hp ? -1 : a.hp > b.hp ? 0 : 1
-        if (win >= 0) { s.score[win]++; change(s.fighters[win], 'VICTORY_ACTION_DEFINITION'); change(s.fighters[1 - win], 'DEFEAT_ACTION_DEFINITION'); if (s.score[win] >= RULES.wins) s.winner = win; else s.pause = 150 }
-        else s.pause = 150
+        if (win >= 0) { s.score[win]++; change(s.fighters[win], 'VICTORY_ACTION_DEFINITION'); change(s.fighters[1 - win], 'DEFEAT_ACTION_DEFINITION'); if (s.score[win] >= RULES.wins) s.winner = win; else s.pause = 360 }
+        else s.pause = 360
     }
     return s
 }
