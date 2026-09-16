@@ -54,7 +54,15 @@ const visualStrike: Record<string, Record<string, [number, number, number, numbe
         CROSS_ACTION_DEFINITION: [20, 820, -660, -50], SWEEP_ACTION_DEFINITION: [80, 920, -480, -20],
         FINISHER_ACTION_DEFINITION: [40, 620, -820, -30], SWAP_ACTION_DEFINITION: [80, 1600, -560, -40],
     },
-    marci: { SWEEP_ACTION_DEFINITION: [150, 600, -550, -40], KICK_1_ACTION_DEFINITION: [150, 600, -550, -40], KICK_2_ACTION_DEFINITION: [150, 600, -550, -40], KICK_3_ACTION_DEFINITION: [150, 600, -550, -140] },
+    marci: {
+        // Reach tuned for current COLLISION_SCALE — keep fists near the posed limb, not mid-screen.
+        JAB_ACTION_DEFINITION: [100, 340, -600, -80], JAB_2_ACTION_DEFINITION: [100, 350, -600, -80], JAB_3_ACTION_DEFINITION: [100, 365, -620, -70],
+        CROSS_ACTION_DEFINITION: [90, 355, -600, -80], CROSS_2_ACTION_DEFINITION: [90, 365, -600, -80], CROSS_3_ACTION_DEFINITION: [90, 380, -620, -70],
+        FINISHER_ACTION_DEFINITION: [80, 400, -800, -50], FINISHER_2_ACTION_DEFINITION: [80, 415, -820, -40],
+        SWEEP_ACTION_DEFINITION: [120, 430, -500, -60],
+        KICK_1_ACTION_DEFINITION: [120, 440, -520, -70], KICK_2_ACTION_DEFINITION: [120, 450, -520, -70], KICK_3_ACTION_DEFINITION: [110, 465, -540, -60],
+        DASH_STRIKE_ACTION_DEFINITION: [140, 320, -580, -100], DASH_STRIKE_2_ACTION_DEFINITION: [140, 335, -600, -90],
+    },
 }
 // Traveling skills were a standing-height slab. These sit on the drawn sprite or model.
 const visualShot: Record<string, Record<string, [number, number, number, number]>> = {
@@ -94,6 +102,13 @@ const visualHurt: Record<string, Record<string, [number, number, number, number]
         IDLE_ACTION_DEFINITION: [-130, 150, -560, 0], BLOCKSTUN_ACTION_DEFINITION: [-130, 150, -560, 0], HITSTUN_ACTION_DEFINITION: [-130, 150, -560, 0],
         DASH_ACTION_DEFINITION: [-130, 150, -560, 0], BACKDASH_ACTION_DEFINITION: [-130, 150, -560, 0], GUARDBREAK_ACTION_DEFINITION: [-130, 150, -560, 0],
         VICTORY_ACTION_DEFINITION: [-130, 150, -560, 0], DEFEAT_ACTION_DEFINITION: [-100, 120, -560, 0], KNOCKED_DOWN_ACTION_DEFINITION: [-200, 200, -300, 0],
+        JAB_ACTION_DEFINITION: [-120, 320, -560, 0], JAB_2_ACTION_DEFINITION: [-120, 340, -560, 0], JAB_3_ACTION_DEFINITION: [-120, 360, -580, 0],
+        CROSS_ACTION_DEFINITION: [-130, 360, -560, 0], CROSS_2_ACTION_DEFINITION: [-130, 380, -560, 0], CROSS_3_ACTION_DEFINITION: [-130, 400, -580, 0],
+        FINISHER_ACTION_DEFINITION: [-140, 420, -700, 0], FINISHER_2_ACTION_DEFINITION: [-140, 440, -720, 0],
+        SWEEP_ACTION_DEFINITION: [-140, 420, -540, 0],
+        KICK_1_ACTION_DEFINITION: [-140, 440, -540, 0], KICK_2_ACTION_DEFINITION: [-140, 460, -540, 0], KICK_3_ACTION_DEFINITION: [-150, 480, -560, 0],
+        DASH_STRIKE_ACTION_DEFINITION: [-100, 420, -580, 0], DASH_STRIKE_2_ACTION_DEFINITION: [-100, 460, -600, 0],
+        UNLEASH_ACTION_DEFINITION: [-140, 220, -620, 0],
     },
     dawnbreaker: {
         IDLE_ACTION_DEFINITION: [-170, 190, -580, 0], BLOCKSTUN_ACTION_DEFINITION: [-170, 190, -580, 0], HITSTUN_ACTION_DEFINITION: [-170, 190, -580, 0],
@@ -178,7 +193,10 @@ export function step(previous: State, inputs: Input[], mode: 'play' | 'move' = '
         }
         const dash = f.action === 'DASH_ACTION_DEFINITION' || f.action === 'BACKDASH_ACTION_DEFINITION'
         if (dash || (a.m_nDashDuration && f.age >= a.m_nDashStart && f.age < a.m_nDashStart + a.m_nDashDuration)) f.x += f.face * (f.action === 'BACKDASH_ACTION_DEFINITION' ? -1 : 1) * RULES.speed * (a.m_flDashSpeedMultiplier ?? 3)
-        if (a.m_nInstallFrames && f.age === a.m_nInstallStart) f.install = a.m_nInstallFrames
+        if (a.m_nInstallFrames && f.age === a.m_nInstallStart) {
+            f.install = a.m_nInstallFrames
+            s.events.push({ id: `${s.round}:${s.frame}:${i}:install`, kind: 'install', x: f.x, face: f.face, hero: f.hero, action: f.action })
+        }
         if (a.m_flProjectileSpeed && !f.spawned && f.age === a.m_nHitBoxStart) { s.projectiles.push({ owner: i, x: f.x, face: f.face, action: f.action, life: 180, id: `${s.frame}:${i}` }); f.spawned = true }
     }
     // Evaluate both strikes before applying stun so simultaneous hits can trade.
