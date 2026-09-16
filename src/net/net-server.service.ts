@@ -32,13 +32,20 @@ export class NetServerService implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit() {
     const host = this.config.get<string>('HOST') ?? '0.0.0.0'
-    // Cloud hosts (Railway/Render/Fly) expose a single PORT. Locally we can still
-    // split HTTP_PORT (Nest) and PORT (raw ws) when both are set and differ.
+    const onCloud = !!(
+      process.env.RAILWAY_ENVIRONMENT ||
+      process.env.RAILWAY_SERVICE_ID ||
+      process.env.RENDER ||
+      process.env.FLY_APP_NAME
+    )
+    // Cloud hosts expose a single PORT. Locally we can still split HTTP_PORT
+    // (Nest) and PORT (raw ws) when both are set and differ.
     const wsPort = Number(this.config.get('PORT') ?? 3001)
     const httpPort = Number(
       this.config.get('HTTP_PORT') ?? this.config.get('PORT') ?? 3010,
     )
-    const shareHttp = !this.config.get('HTTP_PORT') || httpPort === wsPort
+    const shareHttp =
+      onCloud || !this.config.get('HTTP_PORT') || httpPort === wsPort
 
     if (shareHttp) {
       const server = this.httpAdapterHost.httpAdapter.getHttpServer() as HttpServer
