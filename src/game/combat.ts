@@ -2,8 +2,10 @@ import data from './roster.json'
 export const roster: Record<string, any> = data
 export const WORLD_PER_SIM = 1 / 300
 export const FIGHTER_TARGET_HEIGHT = 3.8
-export const FIGHTER_PRESENCE = 1.56
-const AUTHORED_BODY_HEIGHT = 550
+export const FIGHTER_PRESENCE = 1.35
+// Authored VPK hurtboxes are ~550 tall. Use a shorter reference so COLLISION_SCALE
+// grows with the body-normalized 3D models (head/hat/shoulders sit above the mesh).
+const AUTHORED_BODY_HEIGHT = 420
 export const COLLISION_SCALE = (FIGHTER_TARGET_HEIGHT * FIGHTER_PRESENCE) / (AUTHORED_BODY_HEIGHT * WORLD_PER_SIM)
 // Only these globals are provisional; per-action explicit values come from the VPK.
 export const RULES = { hz: 60, health: 2000, guard: 100, roundFrames: 5940, wins: 2, speed: 12, edge: 2400, commandWindow: 18, rollback: 120 }
@@ -62,17 +64,36 @@ const visualShot: Record<string, Record<string, [number, number, number, number]
 export function shotBox(hero: string, id: string, box: any) { const fit = visualShot[hero]?.[id]; return fit ? fitBox(box, fit[0], fit[1], fit[2], fit[3]) : box }
 function visualBox(hero: string, id: string, box: any) { if (hero === 'dawnbreaker') return fitBox(box, -650, 180, -1120, -90); const fit = visualStrike[hero]?.[id]; return fit ? fitBox(box, fit[0], fit[1], fit[2], fit[3]) : box }
 export function strikeBox(f: Fighter) { const a = action(f); if (!a.m_HitBox || a.m_flProjectileSpeed || f.connected || f.stop > 0) return null; const start = a.m_nHitBoxStart ?? 0; if (f.age < start || f.age >= start + (a.m_nHitBoxDuration ?? 0)) return null; return visualBox(f.hero, f.action, a.m_HitBox) }
-// Tusk's authored hurtboxes stay standing height and grow a long arm in front of the fist.
-// These follow the posed body, so the green box stops at the head and the hand.
+// Visual hurtboxes follow the posed 3D body (wider belly / shoulders than the VPK slabs).
 const visualHurt: Record<string, Record<string, [number, number, number, number]>> = {
     tusk: {
-        IDLE_ACTION_DEFINITION: [-150, 170, -420, 0], BLOCKSTUN_ACTION_DEFINITION: [-150, 170, -420, 0], HITSTUN_ACTION_DEFINITION: [-150, 170, -420, 0],
-        DASH_ACTION_DEFINITION: [-150, 170, -420, 0], BACKDASH_ACTION_DEFINITION: [-150, 170, -420, 0], GUARDBREAK_ACTION_DEFINITION: [-150, 170, -420, 0],
-        VICTORY_ACTION_DEFINITION: [-150, 170, -420, 0], DEFEAT_ACTION_DEFINITION: [-110, 110, -420, 0], KNOCKED_DOWN_ACTION_DEFINITION: [-200, 200, -280, 0],
-        JAB_ACTION_DEFINITION: [-175, 370, -380, 0], JAB_2_ACTION_DEFINITION: [-175, 370, -380, 0],
-        CROSS_ACTION_DEFINITION: [-230, 380, -400, 0], SWEEP_ACTION_DEFINITION: [-310, 380, -450, 0],
-        PROJECTILE_ACTION_DEFINITION: [-250, 280, -480, 0],
-        FINISHER_ACTION_DEFINITION: [-290, 320, -580, 0], WALRUS_PUNCH_ACTION_DEFINITION: [-270, 320, -810, 0],
+        IDLE_ACTION_DEFINITION: [-220, 240, -560, 0], BLOCKSTUN_ACTION_DEFINITION: [-220, 240, -560, 0], HITSTUN_ACTION_DEFINITION: [-220, 240, -560, 0],
+        DASH_ACTION_DEFINITION: [-220, 240, -560, 0], BACKDASH_ACTION_DEFINITION: [-220, 240, -560, 0], GUARDBREAK_ACTION_DEFINITION: [-220, 240, -560, 0],
+        VICTORY_ACTION_DEFINITION: [-220, 240, -560, 0], DEFEAT_ACTION_DEFINITION: [-160, 160, -560, 0], KNOCKED_DOWN_ACTION_DEFINITION: [-260, 260, -320, 0],
+        JAB_ACTION_DEFINITION: [-200, 420, -520, 0], JAB_2_ACTION_DEFINITION: [-200, 420, -520, 0],
+        CROSS_ACTION_DEFINITION: [-250, 430, -540, 0], SWEEP_ACTION_DEFINITION: [-330, 430, -560, 0],
+        PROJECTILE_ACTION_DEFINITION: [-270, 300, -560, 0],
+        FINISHER_ACTION_DEFINITION: [-310, 340, -620, 0], WALRUS_PUNCH_ACTION_DEFINITION: [-290, 340, -820, 0],
+    },
+    vengeful: {
+        IDLE_ACTION_DEFINITION: [-90, 210, -580, 0], BLOCKSTUN_ACTION_DEFINITION: [-90, 210, -580, 0], HITSTUN_ACTION_DEFINITION: [-90, 210, -580, 0],
+        DASH_ACTION_DEFINITION: [-90, 210, -580, 0], BACKDASH_ACTION_DEFINITION: [-90, 210, -580, 0], GUARDBREAK_ACTION_DEFINITION: [-90, 210, -580, 0],
+        VICTORY_ACTION_DEFINITION: [-90, 210, -580, 0], DEFEAT_ACTION_DEFINITION: [-70, 160, -580, 0], KNOCKED_DOWN_ACTION_DEFINITION: [-180, 220, -300, 0],
+    },
+    bristleback: {
+        IDLE_ACTION_DEFINITION: [-160, 180, -560, 0], BLOCKSTUN_ACTION_DEFINITION: [-160, 180, -560, 0], HITSTUN_ACTION_DEFINITION: [-160, 180, -560, 0],
+        DASH_ACTION_DEFINITION: [-160, 180, -560, 0], BACKDASH_ACTION_DEFINITION: [-160, 180, -560, 0], GUARDBREAK_ACTION_DEFINITION: [-160, 180, -560, 0],
+        VICTORY_ACTION_DEFINITION: [-160, 180, -560, 0], DEFEAT_ACTION_DEFINITION: [-120, 140, -560, 0], KNOCKED_DOWN_ACTION_DEFINITION: [-220, 220, -300, 0],
+    },
+    marci: {
+        IDLE_ACTION_DEFINITION: [-130, 150, -560, 0], BLOCKSTUN_ACTION_DEFINITION: [-130, 150, -560, 0], HITSTUN_ACTION_DEFINITION: [-130, 150, -560, 0],
+        DASH_ACTION_DEFINITION: [-130, 150, -560, 0], BACKDASH_ACTION_DEFINITION: [-130, 150, -560, 0], GUARDBREAK_ACTION_DEFINITION: [-130, 150, -560, 0],
+        VICTORY_ACTION_DEFINITION: [-130, 150, -560, 0], DEFEAT_ACTION_DEFINITION: [-100, 120, -560, 0], KNOCKED_DOWN_ACTION_DEFINITION: [-200, 200, -300, 0],
+    },
+    dawnbreaker: {
+        IDLE_ACTION_DEFINITION: [-170, 190, -580, 0], BLOCKSTUN_ACTION_DEFINITION: [-170, 190, -580, 0], HITSTUN_ACTION_DEFINITION: [-170, 190, -580, 0],
+        DASH_ACTION_DEFINITION: [-170, 190, -580, 0], BACKDASH_ACTION_DEFINITION: [-170, 190, -580, 0], GUARDBREAK_ACTION_DEFINITION: [-170, 190, -580, 0],
+        VICTORY_ACTION_DEFINITION: [-170, 190, -580, 0], DEFEAT_ACTION_DEFINITION: [-130, 150, -580, 0], KNOCKED_DOWN_ACTION_DEFINITION: [-230, 230, -300, 0],
     },
 }
 function fittedHurt(hero: string, id: string, box: any) { const fit = visualHurt[hero]?.[id]; return fit ? fitBox(box, fit[0], fit[1], fit[2], fit[3]) : box }
