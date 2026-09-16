@@ -63,6 +63,14 @@ const visualStrike: Record<string, Record<string, [number, number, number, numbe
         KICK_1_ACTION_DEFINITION: [120, 440, -520, -70], KICK_2_ACTION_DEFINITION: [120, 450, -520, -70], KICK_3_ACTION_DEFINITION: [110, 465, -540, -60],
         DASH_STRIKE_ACTION_DEFINITION: [140, 320, -580, -100], DASH_STRIKE_2_ACTION_DEFINITION: [140, 335, -600, -90],
     },
+    dawnbreaker: {
+        // Keep strike near the hammer head — previous reach was connecting across open space.
+        JAB_ACTION_DEFINITION: [150, 310, -600, -120], JAB_2_ACTION_DEFINITION: [150, 325, -600, -120],
+        SWEEP_ACTION_DEFINITION: [160, 360, -500, -120], SWEEP_2_ACTION_DEFINITION: [160, 375, -500, -110],
+        STARBREAKER_1_ACTION_DEFINITION: [150, 335, -580, -130], STARBREAKER_2_ACTION_DEFINITION: [150, 350, -560, -130],
+        STARBREAKER_3_ACTION_DEFINITION: [150, 340, -520, -110],
+        LUMINOSITY_ACTION_DEFINITION: [140, 345, -740, -100],
+    },
 }
 // Traveling skills were a standing-height slab. These sit on the drawn sprite or model.
 const visualShot: Record<string, Record<string, [number, number, number, number]>> = {
@@ -71,7 +79,7 @@ const visualShot: Record<string, Record<string, [number, number, number, number]
     vengeful: { PROJECTILE_ACTION_DEFINITION: [-70, 70, -280, -80] },
 }
 export function shotBox(hero: string, id: string, box: any) { const fit = visualShot[hero]?.[id]; return fit ? fitBox(box, fit[0], fit[1], fit[2], fit[3]) : box }
-function visualBox(hero: string, id: string, box: any) { if (hero === 'dawnbreaker') return fitBox(box, -650, 180, -1120, -90); const fit = visualStrike[hero]?.[id]; return fit ? fitBox(box, fit[0], fit[1], fit[2], fit[3]) : box }
+function visualBox(hero: string, id: string, box: any) { const fit = visualStrike[hero]?.[id]; return fit ? fitBox(box, fit[0], fit[1], fit[2], fit[3]) : box }
 export function strikeBox(f: Fighter) { const a = action(f); if (!a.m_HitBox || a.m_flProjectileSpeed || f.connected || f.stop > 0) return null; const start = a.m_nHitBoxStart ?? 0; if (f.age < start || f.age >= start + (a.m_nHitBoxDuration ?? 0)) return null; return visualBox(f.hero, f.action, a.m_HitBox) }
 // Visual hurtboxes follow the posed 3D body (wider belly / shoulders than the VPK slabs).
 const visualHurt: Record<string, Record<string, [number, number, number, number]>> = {
@@ -111,9 +119,13 @@ const visualHurt: Record<string, Record<string, [number, number, number, number]
         UNLEASH_ACTION_DEFINITION: [-140, 220, -620, 0],
     },
     dawnbreaker: {
-        IDLE_ACTION_DEFINITION: [-170, 190, -580, 0], BLOCKSTUN_ACTION_DEFINITION: [-170, 190, -580, 0], HITSTUN_ACTION_DEFINITION: [-170, 190, -580, 0],
-        DASH_ACTION_DEFINITION: [-170, 190, -580, 0], BACKDASH_ACTION_DEFINITION: [-170, 190, -580, 0], GUARDBREAK_ACTION_DEFINITION: [-170, 190, -580, 0],
-        VICTORY_ACTION_DEFINITION: [-170, 190, -580, 0], DEFEAT_ACTION_DEFINITION: [-130, 150, -580, 0], KNOCKED_DOWN_ACTION_DEFINITION: [-230, 230, -300, 0],
+        IDLE_ACTION_DEFINITION: [-150, 160, -580, 0], BLOCKSTUN_ACTION_DEFINITION: [-150, 160, -580, 0], HITSTUN_ACTION_DEFINITION: [-150, 160, -580, 0],
+        DASH_ACTION_DEFINITION: [-150, 160, -580, 0], BACKDASH_ACTION_DEFINITION: [-150, 160, -580, 0], GUARDBREAK_ACTION_DEFINITION: [-150, 160, -580, 0],
+        VICTORY_ACTION_DEFINITION: [-150, 160, -580, 0], DEFEAT_ACTION_DEFINITION: [-120, 140, -580, 0], KNOCKED_DOWN_ACTION_DEFINITION: [-210, 210, -300, 0],
+        JAB_ACTION_DEFINITION: [-140, 280, -600, 0], JAB_2_ACTION_DEFINITION: [-140, 290, -600, 0],
+        SWEEP_ACTION_DEFINITION: [-150, 310, -560, 0], SWEEP_2_ACTION_DEFINITION: [-150, 320, -560, 0],
+        STARBREAKER_1_ACTION_DEFINITION: [-140, 300, -600, 0], STARBREAKER_2_ACTION_DEFINITION: [-140, 310, -580, 0],
+        STARBREAKER_3_ACTION_DEFINITION: [-145, 300, -560, 0], LUMINOSITY_ACTION_DEFINITION: [-150, 300, -700, 0],
     },
 }
 function fittedHurt(hero: string, id: string, box: any) { const fit = visualHurt[hero]?.[id]; return fit ? fitBox(box, fit[0], fit[1], fit[2], fit[3]) : box }
