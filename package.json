@@ -23,6 +23,9 @@
   ],
   "private": false,
   "license": "MIT",
+  "engines": {
+    "node": ">=20.11"
+  },
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
